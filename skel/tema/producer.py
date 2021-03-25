@@ -6,8 +6,13 @@ Assignment 1
 March 2021
 """
 
+from tema.marketplace import Marketplace
 from threading import Thread
+import time
 
+ID = 0
+CANTITY = 1
+PRODUCING_DELAY = 2
 
 class Producer(Thread):
     """
@@ -31,7 +36,24 @@ class Producer(Thread):
         @type kwargs:
         @param kwargs: other arguments that are passed to the Thread's __init__()
         """
-        pass
+        Thread.__init__(self=self, name=kwargs['name'], daemon=kwargs['daemon'])
+        self.producs = products
+        self.marketplace = marketplace
+        self.republish_wait_time = republish_wait_time
+
+    def produce_single_product(self, producer_id, product):
+        """produces a single product"""
+        time.sleep(product[PRODUCING_DELAY])
+        while not self.marketplace.publish(producer_id, product[ID]):
+            time.sleep(self.republish_wait_time)
+
+    def produce(self, producer_id):
+        """produces all the products in a loop"""
+        while True:
+            for product in self.producs:
+                for _ in range (0, product[CANTITY]):
+                    self.produce_single_product(producer_id, product)
 
     def run(self):
-        pass
+        producer_id = self.marketplace.register_producer()
+        self.produce(producer_id)
