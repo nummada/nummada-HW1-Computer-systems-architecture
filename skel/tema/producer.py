@@ -44,6 +44,7 @@ class Producer(Thread):
     def produce_single_product(self, producer_id, product):
         """produces a single product"""
         time.sleep(product[PRODUCING_DELAY])
+        # publish a products or wait and try again
         while not self.marketplace.publish(producer_id, product[ID]):
             time.sleep(self.republish_wait_time)
 
@@ -55,5 +56,7 @@ class Producer(Thread):
                     self.produce_single_product(producer_id, product)
 
     def run(self):
+        # get a producer id
         producer_id = self.marketplace.register_producer()
+        # start the production
         self.produce(producer_id)

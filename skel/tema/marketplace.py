@@ -22,10 +22,12 @@ class Marketplace:
         self.queue_size_per_produces = queue_size_per_producer
         self.carts_products = []
         self.producers_queues = []
+        self.queues_locks = []
+
+        # locks for basic operations
         self.register_producer_lock = Lock()
         self.register_cart_lock = Lock()
         self.publish_lock = Lock()
-        self.queues_locks = []
 
     def register_producer(self):
         """
@@ -33,6 +35,7 @@ class Marketplace:
         """
         self.register_producer_lock.acquire()
 
+        # the next available producer id
         producer_id = len(self.producers_queues)
         self.producers_queues.append([])
         self.queues_locks.append(Lock())
@@ -55,6 +58,7 @@ class Marketplace:
         """
         self.publish_lock.acquire()
 
+        # is there is no more space
         if len(self.producers_queues[producer_id]) > self.queue_size_per_produces:
             self.publish_lock.release()
             return False
@@ -72,6 +76,7 @@ class Marketplace:
         """
         self.register_cart_lock.acquire()
 
+        # the next available cart id
         cart_id = len(self.carts_products)
         self.carts_products.append([])
 
@@ -94,6 +99,7 @@ class Marketplace:
             # queue = self.producers_queues[i]
             self.queues_locks[i].acquire()
             for queue_product in queue:
+                # if we found the product, remove it from the market and add it to the cart
                 if queue_product == product:
                     self.carts_products[cart_id].append((product, i))
                     queue.remove(queue_product)
@@ -117,6 +123,7 @@ class Marketplace:
         """
 
         for pair in self.carts_products[cart_id]:
+            # if we found the product, remove it from the cart and add it to the market
             if pair[0] == product:
                 self.queues_locks[pair[1]].acquire()
                 self.producers_queues[pair[1]].append(product)
@@ -133,4 +140,5 @@ class Marketplace:
         :type cart_id: Int
         :param cart_id: id cart
         """
+        # list containing the products from a cart
         return self.carts_products[cart_id]

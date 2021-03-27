@@ -60,7 +60,7 @@ class Consumer(Thread):
 
     def make_actions(self, products, quantities, commands, cart_id):
         """make the add or remove actions"""
-        for i, product in enumerate (products):
+        for i, product in enumerate(products):
             if commands[i] == ADD:
                 self.add_product(product, cart_id, quantities[i])
             elif commands[i] == REMOVE:
@@ -76,16 +76,21 @@ class Consumer(Thread):
 
     def run(self):
 
+        # get a cart id
         cart_id = self.marketplace.new_cart()
 
+        # save the data from input
         for sublist in self.carts:
             for dictionary in sublist:
                 self.init_data(dictionary)
 
+        # add or remove products
         self.make_actions(self.products, self.quantities, self.commands, cart_id)
 
+        # place the order
         products_list = self.marketplace.place_order(cart_id)
 
+        # show informations about the ordered products
         products_list.reverse()
         for product in products_list:
             print(self.name + " bought " + repr(product[0]))
