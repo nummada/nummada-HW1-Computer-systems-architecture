@@ -6,8 +6,8 @@ Assignment 1
 March 2021
 """
 
-from tema.marketplace import Marketplace
 from threading import Thread
+# from tema.marketplace import Marketplace
 import time
 
 ID = 0

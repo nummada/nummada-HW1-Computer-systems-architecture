@@ -5,10 +5,9 @@ Computer Systems Architecture Course
 Assignment 1
 March 2021
 """
-import itertools
-from tema.product import Coffee, Tea
 from threading import Thread
 import time
+# from tema.product import Coffee, Tea
 
 TYPE = "type"
 PRODUCT = "product"
@@ -42,45 +41,51 @@ class Consumer(Thread):
         self.carts = carts
         self.marketplace = marketplace
         self.retry_wait_time = retry_wait_time
+        self.products = []
+        self.quantities = []
+        self.commands = []
 
 
     def add_product(self, product, cart_id, quantity):
+        """adds a product in the cart"""
         for _ in range(quantity):
             while not self.marketplace.add_to_cart(cart_id, product):
                 time.sleep(self.retry_wait_time)
 
     def remove_product(self, product, cart_id, quantity):
+        """removes a product from the cart"""
         for _ in range(quantity):
             while not self.marketplace.remove_from_cart(cart_id, product):
                 time.sleep(self.retry_wait_time)
 
     def make_actions(self, products, quantities, commands, cart_id):
-        for i in range (len(products)):
+        """make the add or remove actions"""
+        for i, product in enumerate (products):
             if commands[i] == ADD:
-                self.add_product(products[i], cart_id, quantities[i])
+                self.add_product(product, cart_id, quantities[i])
             elif commands[i] == REMOVE:
-                self.remove_product(products[i], cart_id, quantities[i])
+                self.remove_product(product, cart_id, quantities[i])
+
+    def init_data(self, dictionary):
+        """create data structures that hold the program input"""
+        command_type = dictionary[TYPE]
+        self.commands.append(command_type)
+        self.quantities.append(dictionary[QUANTITY])
+        product = dictionary[PRODUCT]
+        self.products.append(product)
 
     def run(self):
 
         cart_id = self.marketplace.new_cart()
 
-        products = []
-        quantities = []
-        commands = []
+        for sublist in self.carts:
+            for dictionary in sublist:
+                self.init_data(dictionary)
 
-        for list_aux in self.carts:
-            for dict_aux in list_aux:
-                command_type = dict_aux[TYPE]
-                commands.append(command_type)
-                product = dict_aux[PRODUCT]
-                quantities.append(dict_aux[QUANTITY])
-                products.append(product)
-        
-        self.make_actions(products, quantities, commands, cart_id)
-        
+        self.make_actions(self.products, self.quantities, self.commands, cart_id)
+
         products_list = self.marketplace.place_order(cart_id)
 
-        products_list = products_list[::-1]
+        products_list.reverse()
         for product in products_list:
             print(self.name + " bought " + repr(product[0]))

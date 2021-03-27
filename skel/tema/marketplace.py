@@ -25,7 +25,6 @@ class Marketplace:
         self.register_producer_lock = Lock()
         self.register_cart_lock = Lock()
         self.publish_lock = Lock()
-
         self.queues_locks = []
 
     def register_producer(self):
@@ -39,7 +38,7 @@ class Marketplace:
         self.queues_locks.append(Lock())
 
         self.register_producer_lock.release()
-        
+
         return producer_id
 
     def publish(self, producer_id, product):
@@ -75,6 +74,7 @@ class Marketplace:
 
         cart_id = len(self.carts_products)
         self.carts_products.append([])
+
         self.register_cart_lock.release()
         return cart_id
 
@@ -90,8 +90,8 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again
         """
-        for i in range(len(self.producers_queues)):
-            queue = self.producers_queues[i]
+        for i, queue in enumerate(self.producers_queues):
+            # queue = self.producers_queues[i]
             self.queues_locks[i].acquire()
             for queue_product in queue:
                 if queue_product == product:
@@ -99,7 +99,7 @@ class Marketplace:
                     queue.remove(queue_product)
                     self.queues_locks[i].release()
                     return True
-        
+
             self.queues_locks[i].release()
         return False
 
@@ -116,17 +116,15 @@ class Marketplace:
         :param product: the product to remove from cart
         """
 
-        found = False
         for pair in self.carts_products[cart_id]:
             if pair[0] == product:
                 self.queues_locks[pair[1]].acquire()
                 self.producers_queues[pair[1]].append(product)
-                found = True
                 self.carts_products[cart_id].remove(pair)
                 self.queues_locks[pair[1]].release()
-                break
+                return True
 
-        return found
+        return False
 
     def place_order(self, cart_id):
         """
